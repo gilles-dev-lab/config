@@ -1,6 +1,7 @@
-public class SiteSettings
+
+public interface ISiteSettings
 {
-    public string CodeSite { get; set; }
-    public string Culture { get; set; }
-    public string Devise { get; set; }
+    string CodeSite { get; }
+    string Culture { get; }
+    string Devise { get; }
 }
