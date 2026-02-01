@@ -11,29 +11,20 @@
 // builder.RegisterModule<TdvModule>(); 
 //public class SiteAModule : Module { protected override void Load(ContainerBuilder builder) { builder.RegisterModule<ListProductsModule>(); builder.RegisterModule<ProductsModule>(); builder.RegisterModule<PaiementModule>(); } } 
 
-// /models/HomeViewModel
-// public class HomeVm
-// {
-//     public string Devise { get; } 
-//     public HomeVm(SiteSettings settings) 
-//     { 
-//         Devise = settings.Devise; 
-//     }
-// }
 
 // // Controller 
 // public class HomeController : Controller
 // {
-//     private readonly SiteSettings _site;
+//     private readonly ISiteSettings _siteSettings;
 
-//     public HomeController(SiteSettings site)
+//     public HomeController(ISiteSettings siteSettings)
 //     {
-//         _site = site;
+//         _siteSettings = siteSettings;
 //     }
 
 //     public ActionResult Index()
 //     {
-//         var vm = new HomeVm(_site);
+//         var vm = new HomeVm(_siteSettings.Culture);
 //         return View(vm);
 //     }
 // }
@@ -46,31 +37,32 @@
 //     Devise du site : @Model.Devise
 // */
 
-public static class SettingsFactory
+
+public class SettingsFactory : ISettingsFactory
 {
-    // Hydratation des POCOs
-    public static SiteSettings CreateSiteSettings() => new SiteSettings
+    private readonly NameValueCollection _config;
+
+    public SettingsFactory()
+    {
+        _config = ConfigurationManager.AppSettings;
+    }
+
+    private string Get(string key) => _config[key];
+
+    public ISiteSettings CreateSiteSettings() => new SiteSettings
     {
         CodeSite = Get("codeSite"),
         Culture = Get("culture"),
         Devise = Get("Devise")
     };
 
-    public static PathsSettings CreatePathsSettings() => new PathsSettings
+    public IPathsSettings CreatePathsSettings() => new PathsSettings
     {
-        Destinations = int.Parse(Get("destinations")),
-        DefaultPath = Get("defaultPath")
+        TempFolder = Get("tempFolder"),
+        LogsFolder = Get("logsFolder")
     };
-
-    public static AppSettings CreateAppSettings() => new AppSettings
-    {
-        ApiUrl = Get("ApiUrl")
-    };
-
-    private static string Get(string key) =>
-        ConfigurationManager.AppSettings[key]
-        ?? throw new ConfigurationErrorsException($"Missing key: {key}");
 }
+
 
 /*
           _____                   _______                   _____                    _____          
