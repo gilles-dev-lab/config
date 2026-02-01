@@ -21,44 +21,17 @@ public class SiteSettings : ISiteSettings
     [ConfigKey("MaxUsers")]
     public int MaxUsers { get; set; }
 }
-
-// create generique
-public T CreateSettings<T>() where T : new()
-{
-    var settings = new T();
-
-    foreach (var prop in typeof(T).GetProperties())
-    {
-        var attr = prop.GetCustomAttribute<ConfigKeyAttribute>();
-        if (attr == null)
-            continue;
-
-        var raw = _config[attr.Key];
-        if (raw == null)
-            throw new ConfigurationErrorsException($"Missing key '{attr.Key}' in Web.config.");
-
-        var value = Convert.ChangeType(raw, prop.PropertyType);
-        prop.SetValue(settings, value);
-    }
-
-    return settings;
-}
+public static class SettingsBuilder {
+public static T Build<T>() where T : new() { var settings = new T(); var config = ConfigurationManager.AppSettings; foreach (var prop in typeof(T).GetProperties()) { var attr = prop.GetCustomAttribute<ConfigKeyAttribute>(); if (attr == null) continue; var raw = config[attr.Key]; if (raw == null) throw new ConfigurationErrorsException($"Missing key '{attr.Key}' in Web.config."); var value = Convert.ChangeType(raw, prop.PropertyType); prop.SetValue(settings, value); } return settings; }}
 
 
-// Factory 
-public class SettingsFactory : ISettingsFactory
-{
-    public ISiteSettings CreateSiteSettings() => CreateSettings<SiteSettings>();
-    public IPathsSettings CreatePathsSettings() => CreateSettings<PathsSettings>();
-}
 
-
-// autofac || en core on supprime tout et on remplace par services.Configure<SiteSettings>(Configuration.GetSection("Site"));
-
-builder.RegisterType<SettingsFactory>()
-       .As<ISettingsFactory>()
-       .SingleInstance();
-
-builder.Register(c => c.Resolve<ISettingsFactory>().CreateSiteSettings())
+// autofac
+builder.Register(c => SettingsBuilder.Build<SiteSettings>())
        .As<ISiteSettings>()
        .SingleInstance();
+
+builder.Register(c => SettingsBuilder.Build<PathsSettings>())
+       .As<IPathsSettings>()
+       .SingleInstance();
+
