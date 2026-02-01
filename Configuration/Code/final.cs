@@ -21,8 +21,37 @@ public class SiteSettings : ISiteSettings
     [ConfigKey("MaxUsers")]
     public int MaxUsers { get; set; }
 }
+public interface ISiteSettings
+{
+    string CodeSite { get; }
+    string Culture { get; }
+    string Devise { get; }
+    int MaxUsers { get; }
+}
+
+// Le builder
 public static class SettingsBuilder {
-public static T Build<T>() where T : new() { var settings = new T(); var config = ConfigurationManager.AppSettings; foreach (var prop in typeof(T).GetProperties()) { var attr = prop.GetCustomAttribute<ConfigKeyAttribute>(); if (attr == null) continue; var raw = config[attr.Key]; if (raw == null) throw new ConfigurationErrorsException($"Missing key '{attr.Key}' in Web.config."); var value = Convert.ChangeType(raw, prop.PropertyType); prop.SetValue(settings, value); } return settings; }}
+    private readonly NameValueCollection _config;
+
+    public SettingsBuilder()
+    {
+        _config = ConfigurationManager.AppSettings;
+    }
+
+    public static T Build<T>() where T : new() { 
+        var settings = new T(); 
+        
+        foreach (var prop in typeof(T).GetProperties()) { 
+            var attr = prop.GetCustomAttribute<ConfigKeyAttribute>(); 
+            if (attr == null) continue; 
+            var raw = _config[attr.Key]; 
+            if (raw == null) throw new ConfigurationErrorsException($"Missing key '{attr.Key}' in Web.config.");
+            var value = Convert.ChangeType(raw, prop.PropertyType); 
+            prop.SetValue(settings, value); 
+        }     
+        return settings; 
+    }
+}
 
 
 
